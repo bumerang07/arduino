@@ -1,0 +1,78 @@
+#include <LedControl.h>
+
+// DIN, CLK, CS, liczba modułów
+LedControl lc = LedControl(11, 13, 10, 1);
+
+// joystick
+int xPin = A0;
+int yPin = A1;
+int swPin = 2;
+
+// pozycja piksela
+int x = 3;
+int y = 3;
+
+// progi joysticka
+int lowLimit = 400;
+int highLimit = 600;
+
+// opóźnienie ruchu
+int moveDelay = 180;
+
+void setup() {
+  lc.shutdown(0, false);   // włącz matrycę
+  lc.setIntensity(0, 8);   // jasność od 0 do 15
+  lc.clearDisplay(0);      // wyczyść matrycę
+
+  pinMode(swPin, INPUT_PULLUP);
+
+  drawPixel();
+}
+
+void loop() {
+  int xValue = analogRead(xPin);
+  int yValue = analogRead(yPin);
+
+  bool moved = false;
+
+  // ruch w lewo / prawo
+  if (xValue < lowLimit) {
+    x--;
+    moved = true;
+  } 
+  else if (xValue > highLimit) {
+    x++;
+    moved = true;
+  }
+
+  // ruch góra / dół
+  if (yValue < lowLimit) {
+    y++;
+    moved = true;
+  } 
+  else if (yValue > highLimit) {
+    y--;
+    moved = true;
+  }
+
+  // ograniczenie, żeby piksel nie wyszedł poza matrycę
+  x = constrain(x, 0, 7);
+  y = constrain(y, 0, 7);
+
+  // przycisk joysticka resetuje piksel na środek
+  if (digitalRead(swPin) == LOW) {
+    x = 3;
+    y = 3;
+    moved = true;
+  }
+
+  if (moved) {
+    drawPixel();
+    delay(moveDelay);
+  }
+}
+
+void drawPixel() {
+  lc.clearDisplay(0);
+  lc.setLed(0, y, x, true);
+}
